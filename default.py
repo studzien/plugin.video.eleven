@@ -54,6 +54,7 @@ def userid_hash():
             login = addon.getSetting('username'),
             password = addon.getSetting('password'))
     opener = urllib2.build_opener()
+    opener.addheaders=[('user-agent','Player/3.2.2 phone Android/5.0.1 net/wifi')]
     response = simplejson.loads(opener.open(url).read())
     return (response['usr_id'], response['usr_token'])
 
@@ -68,6 +69,7 @@ def playlist_url(userid, usertoken, streamid):
             userhash = playlist_hash(userid, usertoken),
             userid = userid)
     opener = urllib2.build_opener()
+    opener.addheaders=[('user-agent','Player/3.2.2 phone Android/5.0.1 net/wifi')]
     response = simplejson.loads(opener.open(url).read())
     stream = response['item']['stream']
     return stream['url'] + '?privData=' + stream['encryption_license_data']
