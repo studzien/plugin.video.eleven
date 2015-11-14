@@ -7,6 +7,8 @@ import xbmcaddon
 import xbmcplugin
 import m3u8
 import re
+import simplejson
+import md5
 
 def add_dir(name, url, mode, iconimage, isfolder):
     u=sys.argv[0]+"?url="+urllib.quote_plus(url)+"&mode="+ mode
@@ -45,15 +47,35 @@ def add_link(name, url, title, iconimage):
     liz.setInfo( type="Video", infoLabels={ "Title": title } )
     xbmcplugin.addDirectoryItem(handle=int(sys.argv[1]),url=url,listitem=liz)
 
-def show_channels():
-    url = 'http://www.elevensports.pl/'
+def userid_hash():
+    url = 'http://api.tvnplayer.pl/api2/?v=3.6&platform=Mobile&terminal'\
+    '=Android&format=json&authKey=4dc7b4f711fb9f3d53919ef94c23890c&m='\
+    'authenticate&login={login}&password={password}'.format(
+            login = addon.getSetting('username'),
+            password = addon.getSetting('password'))
     opener = urllib2.build_opener()
-    response = opener.open(url).read()
-    players = re.findall("<iframe src='([^']*)'", response)
-    links = [ re.search('stream=(.*)', p).group(1) for p in players ]
-    urls = [ re.sub('~', '=', l) for l in links ]
-    add_dir('Eleven', urls[0], 'channel', None, True)
-    add_dir('Eleven Sports', urls[1], 'channel', None, True)
+    response = simplejson.loads(opener.open(url).read())
+    return (response['usr_id'], response['usr_token'])
+
+def playlist_hash(userid, usertoken):
+    return md5.new(usertoken + '#' + str(userid)).digest().encode("hex")
+
+def playlist_url(userid, usertoken, streamid):
+    url = 'http://api.tvnplayer.pl/api2/?v=3.6&platform=Mobile&terminal'\
+    '=Android&format=json&authKey=4dc7b4f711fb9f3d53919ef94c23890c&m=getStream'\
+    '&id={streamid}&usrId={userid}&hash={userhash}&osVersion=5.0.1'.format(
+            streamid = streamid,
+            userhash = playlist_hash(userid, usertoken),
+            userid = userid)
+    opener = urllib2.build_opener()
+    response = simplejson.loads(opener.open(url).read())
+    stream = response['item']['stream']
+    return stream['url'] + '?privData=' + stream['encryption_license_data']
+
+def show_channels():
+    (userid, usertoken) = userid_hash()
+    add_dir('Eleven', playlist_url(userid, usertoken, 23), 'channel', None, True)
+    add_dir('Eleven Sports', playlist_url(userid, usertoken, 25), 'channel', None, True)
     xbmcplugin.endOfDirectory(int(sys.argv[1]))
 
 def show_streams(url):

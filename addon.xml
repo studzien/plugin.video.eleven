@@ -5,6 +5,7 @@
        provider-name="studzien">
   <requires>
     <import addon="xbmc.python" version="2.1.0"/>
+    <import addon="script.module.simplejson" veresion="3.3.0"/>
     <import addon="script.module.xmltodict" version="0.2.0"/>
     <import addon="script.module.m3u8" version="0.2.2"/>
     <import addon="script.module.dateutil" version="2.4.2"/>
